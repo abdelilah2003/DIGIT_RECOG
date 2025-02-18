@@ -108,7 +108,12 @@ This script:
 - Loads the MNIST dataset  
 - Normalizes and augments the data  
 - Trains a CNN model  
-- Saves the trained model as `digit_recognition_model.keras`  
+- Saves the trained model as `digit_recognition_model.keras`
+
+  The model was trained using the Adam optimizer, Sparse Categorical Crossentropy loss function, and Accuracy as the evaluation metric.
+Here is the training output for 10 epochs:
+<img width="1068" alt="Image" src="https://github.com/user-attachments/assets/c585413f-1e1b-4449-b9c9-245c4f78d26d" />
+After 10 epochs, the model achieved an accuracy of 99.55% on the MNIST test dataset, demonstrating its high precision in recognizing handwritten digits.
 
 ## Endpoints  
 ### `GET /`  
