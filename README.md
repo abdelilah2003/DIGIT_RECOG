@@ -54,8 +54,8 @@ DIGIT_RECOG/
 ## Installation  
 ### 1. Clone the repository  
 ```sh
-git clone https://github.com/your-repo/digit_recognition.git  
-cd digit_recognition  
+git clone https://github.com/abdelilah2003/DIGIT_RECOG.git  
+cd DIGIT_RECOG  
 ```  
 
 ### 2. Set up a virtual environment  
