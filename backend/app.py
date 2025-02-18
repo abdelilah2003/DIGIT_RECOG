@@ -5,11 +5,13 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from PIL import Image
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="../static", template_folder="../templates")
 
-# Load the trained model
-model = keras.models.load_model('/Applications/XAMPP/xamppfiles/htdocs/python/Digit_Recog/backend/model/digit_recognition_model.keras')
+# Load the trained model (relative path based on the folder structure)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "model", "digit_recognition_model.keras")
+model = keras.models.load_model(MODEL_PATH)
 
 @app.route('/')
 def home():
@@ -18,45 +20,43 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
-    image_data = data['image']
+    if 'image' not in data:
+        return jsonify({'error': 'No image data provided'}), 400
 
-    # Decode the base64 image
-    image_data = image_data.split(',')[1]
+    image_data = data['image'].split(',')[1]  # Remove the base64 header
     img = Image.open(BytesIO(base64.b64decode(image_data)))
 
     # Preprocess the image
-    img = img.convert('L')  # Grayscale
-    img = img.resize((28, 28))  # Resize
+    img = img.convert('L')  # Convert to grayscale
+    img = img.resize((28, 28))  # Resize to MNIST format
     img = np.array(img)
 
     # Invert and normalize
-    img = 255 - img  # MNIST uses white-on-black, canvas is black-on-white
-    img = img.astype(np.float32) / 255.0  # Ensure float32 dtype
+    img = 255 - img  # Convert black-on-white to white-on-black
+    img = img.astype(np.float32) / 255.0  # Normalize
 
-    # Center the digit by cropping whitespace
+    # Crop the digit to remove extra whitespace
     def crop_image(img_array):
-        mask = img_array > 0.1  # Threshold to detect drawn pixels
+        mask = img_array > 0.1  # Threshold for detecting digit pixels
         coords = np.argwhere(mask)
         if coords.size == 0:
             return img_array  # No digit drawn
         y0, x0 = coords.min(axis=0)
         y1, x1 = coords.max(axis=0)
-        cropped = img_array[y0:y1+1, x0:x1+1]
-        return cropped
+        return img_array[y0:y1+1, x0:x1+1]
 
-    # Apply cropping and scaling
     cropped_img = crop_image(img)
-    img = Image.fromarray(cropped_img * 255).resize((20, 20))  # Resize to 20x20
+    img = Image.fromarray(cropped_img * 255).resize((20, 20))
     img = np.array(img) / 255.0
 
-    # Pad to 28x28 (like MNIST)
-    img = np.pad(img, ((4, 4), (4, 4)), mode='constant')  # Add 4px padding
+    # Pad to 28x28 like MNIST
+    img = np.pad(img, ((4, 4), (4, 4)), mode='constant')
     img = img.reshape(1, 28, 28, 1)
 
     # Debugging logs
-    print(f"Image min/max: {img.min()}, {img.max()}")  # Should NOT be 0,0
+    print(f"Image min/max: {img.min()}, {img.max()}")  # Check if correctly normalized
 
-    # Prediction
+    # Model prediction
     prediction = model.predict(img)
     predicted_digit = np.argmax(prediction)
     print(f"Prediction: {predicted_digit}")
